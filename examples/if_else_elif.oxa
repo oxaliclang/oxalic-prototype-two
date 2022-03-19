@@ -1,0 +1,11 @@
+var one  : 1;
+var two  : 2;
+var three: 3;
+
+?( var one = var two ){
+    > "Statement 1 true";
+} !?( var one = var three ) {
+    > "Statement 2 true";
+} !? {
+    > "Both statements false";
+}
