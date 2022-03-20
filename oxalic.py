@@ -143,6 +143,7 @@ class Generator():
         os.system("nasm -f elf64 -o " + filename[:-4] + ".o " + filename[:-4]+".asm")
         os.system("ld " + filename[:-4]+".o -o" + filename[:-4])
         os.system("rm -f " + filename[:-4]+".o")
+        os.system("rm -f " + filename[:-4]+".asm")
 
 class Main():
     def start(filename_argument):
