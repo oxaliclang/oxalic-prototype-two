@@ -65,7 +65,6 @@ class Main():
                     file += line
             tokens = Lexer.token(file)
             parsed = Parser.parse(tokens)
-            print(tokens)
         else:
             Errors.usageError()
 
