@@ -1,4 +1,7 @@
 import sys
+import os
+
+from pyrfc3339 import generate
 functional_operators = [">>", "??", "!?","|?","&","#"]
 
 class Errors():
@@ -49,8 +52,97 @@ class Lexer():
         return tokens
 
 class Parser():
+    # Okay not a "parser" of sorts but eh it works
     def parse(tokens):
-        print(tokens)
+        # Combine strings
+        string_parser = list()
+        combine_strings = str()
+        enable_combine_strings = False
+        for i in tokens:
+            if enable_combine_strings:
+                if i[1] == "\"":
+                    enable_combine_strings = False
+                    combine_strings += i[1]
+                    string_parser.append(combine_strings)
+                    combine_strings = str()
+                else:
+                    combine_strings += i[1]
+            else:
+                if i[1] == "\"":
+                    enable_combine_strings = True
+                    combine_strings += i[1]
+                else:
+                    string_parser.append(i[1])
+        operational_parser = list()
+        check_double_operator = str()
+        for i in string_parser:
+            if i == "":
+                pass
+            elif not check_double_operator:
+                check_double_operator += i
+            else:
+                check_double_operator += i
+                if check_double_operator in functional_operators:
+                    operational_parser.append(check_double_operator)
+                    string_parser[string_parser.index(i)+1] = ""
+                    i = ""
+                else:
+                    operational_parser.append(string_parser[string_parser.index(i)-1])
+                    operational_parser.append(i)
+                    check_double_operator = str()
+
+        return operational_parser
+
+class Generator():
+    def assembly(orig, filename):
+        base_assembly = ["global _start", "section .text", "_start:"]
+        data_assembly = ["section .rodata"]
+        oxa_base_assembly  = list()
+        oxa_data_assembly  = list()
+        cleanup = list()
+        for i in orig:
+            if i == "":
+                pass
+            else:
+                cleanup.append(i)
+        orig = cleanup
+        line_counter = 1
+        for i in orig:
+            if i == ">>":
+                oxa_base_assembly.append("\tmov rax, 1")
+                oxa_base_assembly.append("\tmov rdi, 1")
+                oxa_base_assembly.append("\tmov rsi, msg" + str(line_counter))
+                oxa_base_assembly.append("\tmov rdx, msglen" + str(line_counter))
+                oxa_data_assembly.append("\tmsg" + str(line_counter) +": db " + str(orig[orig.index(i)+2] + ", 10"))
+                oxa_data_assembly.append("\tmsglen" + str(line_counter) + ": equ $ - msg" + str(line_counter))
+            elif i == ";":
+                oxa_base_assembly.append("\tsyscall")
+                line_counter += 1
+
+        for i in oxa_base_assembly:
+            base_assembly.append(i)
+        for i in oxa_data_assembly:
+            data_assembly.append(i)
+
+        base_assembly.append("\tmov rax, 60")
+        base_assembly.append("\tmov rdi, 0")
+        base_assembly.append("\tsyscall")
+
+        assembly = list()
+        for i in base_assembly:
+            assembly.append(i + "\n")
+        for i in data_assembly:
+            assembly.append(i + "\n")
+
+        print(assembly)
+
+        with open(filename[:-4]+".asm","w") as asm:
+            asm.writelines(assembly)
+            asm.close()
+
+        os.system("nasm -f elf64 -o " + filename[:-4] + ".o " + filename[:-4]+".asm")
+        os.system("ld " + filename[:-4]+".o -o" + filename[:-4])
+        os.system("rm -f " + filename[:-4]+".o")
 
 class Main():
     def start(filename_argument):
@@ -65,6 +157,7 @@ class Main():
                     file += line
             tokens = Lexer.token(file)
             parsed = Parser.parse(tokens)
+            Generator.assembly(parsed, filename_argument)
         else:
             Errors.usageError()
 
