@@ -76,21 +76,20 @@ class Parser():
         operational_parser = list()
         check_double_operator = str()
         for i in string_parser:
-            if i == "":
-                pass
-            elif not check_double_operator:
+            if i.startswith("\""):
+                operational_parser.append(string_parser[string_parser.index(i)])             
+            elif not check_double_operator and not i.startswith("\""):
                 check_double_operator += i
-            else:
+            elif check_double_operator and not i.startswith("\""):
                 check_double_operator += i
                 if check_double_operator in functional_operators:
                     operational_parser.append(check_double_operator)
+                    check_double_operator = ""
                     string_parser[string_parser.index(i)+1] = ""
-                    i = ""
                 else:
                     operational_parser.append(string_parser[string_parser.index(i)-1])
                     operational_parser.append(i)
-                    check_double_operator = str()
-
+                    check_double_operator = ""
         return operational_parser
 
 class Generator():
@@ -113,8 +112,12 @@ class Generator():
                 oxa_base_assembly.append("\tmov rdi, 1")
                 oxa_base_assembly.append("\tmov rsi, msg" + str(line_counter))
                 oxa_base_assembly.append("\tmov rdx, msglen" + str(line_counter))
-                oxa_data_assembly.append("\tmsg" + str(line_counter) +": db " + str(orig[orig.index(i)+2] + ", 10"))
-                oxa_data_assembly.append("\tmsglen" + str(line_counter) + ": equ $ - msg" + str(line_counter))
+            elif i.startswith("\""):
+                if "\tmsglen" + str(line_counter) + ": equ $ - msg" + str(line_counter) in oxa_data_assembly:
+                    pass 
+                else:
+                    oxa_data_assembly.append("\tmsg" + str(line_counter) +": db " + str(orig[orig.index(i)+0]) + ", 10")
+                    oxa_data_assembly.append("\tmsglen" + str(line_counter) + ": equ $ - msg" + str(line_counter))
             elif i == ";":
                 oxa_base_assembly.append("\tsyscall")
                 line_counter += 1
@@ -133,8 +136,6 @@ class Generator():
             assembly.append(i + "\n")
         for i in data_assembly:
             assembly.append(i + "\n")
-
-        print(assembly)
 
         with open(filename[:-4]+".asm","w") as asm:
             asm.writelines(assembly)
