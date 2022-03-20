@@ -47,8 +47,10 @@ class Lexer():
                 counter += 1
                 tokens.append([counter, i[1], "optr"])
         return tokens
-            
-            
+
+class Parser():
+    def parse(tokens):
+        print(tokens)
 
 class Main():
     def start(filename_argument):
@@ -62,6 +64,7 @@ class Main():
                         line = ""
                     file += line
             tokens = Lexer.token(file)
+            parsed = Parser.parse(tokens)
             print(tokens)
         else:
             Errors.usageError()
