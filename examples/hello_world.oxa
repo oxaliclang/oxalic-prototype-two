@@ -1,1 +1,2 @@
-> "Hello, world!";
+# Print hello world!
+>> "Hello, world!";
